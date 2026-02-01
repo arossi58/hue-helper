@@ -25,7 +25,23 @@
           <span id="color-hex"></span>
           <span id="color-position"></span>
         </div>
-        <button id="search-btn" class="btn-primary">
+        <div id="location-selector">
+          <label for="location-select">Your region or culture:</label>
+          <select id="location-select" class="location-dropdown">
+            <option value="">Select your location...</option>
+            <option value="Western/European">Western/European</option>
+            <option value="East Asian">East Asian</option>
+            <option value="South Asian">South Asian</option>
+            <option value="Middle Eastern">Middle Eastern</option>
+            <option value="African">African</option>
+            <option value="Latin American">Latin American</option>
+            <option value="Southeast Asian">Southeast Asian</option>
+            <option value="Indigenous/Native American">Indigenous/Native American</option>
+            <option value="Oceanic/Pacific Islander">Oceanic/Pacific Islander</option>
+            <option value="Other">Other/Global</option>
+          </select>
+        </div>
+        <button id="search-btn" class="btn-primary" disabled>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"/>
             <path d="M21 21l-4.35-4.35"/>

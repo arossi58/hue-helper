@@ -14,6 +14,7 @@ const CONFIG = {
 let state = {
   selectedColor: null,
   selectedPosition: null,
+  selectedLocation: null,
   result: null,
   allCultures: [],
   loading: false,
@@ -46,22 +47,22 @@ function saveToStorage(key, value) {
 // ============================================
 // Cache Helpers
 // ============================================
-function getCacheKey(hex) {
-  return `color-cache:${hex.toLowerCase()}`;
+function getCacheKey(hex, location) {
+  return `color-cache:${hex.toLowerCase()}:${location || 'global'}`;
 }
 
-function checkCache(hex) {
-  const cached = getFromStorage(getCacheKey(hex));
+function checkCache(hex, location) {
+  const cached = getFromStorage(getCacheKey(hex, location));
   if (!cached) return null;
-  
+
   const age = Date.now() - (cached.timestamp || 0);
   const maxAge = CONFIG.CACHE_DURATION_DAYS * 24 * 60 * 60 * 1000;
-  
+
   return age < maxAge ? cached.data : null;
 }
 
-function saveToCache(hex, data) {
-  saveToStorage(getCacheKey(hex), {
+function saveToCache(hex, location, data) {
+  saveToStorage(getCacheKey(hex, location), {
     data,
     timestamp: Date.now(),
   });
@@ -211,15 +212,15 @@ function renderResults() {
 // ============================================
 // API Calls
 // ============================================
-async function fetchColorDescription(hex) {
+async function fetchColorDescription(hex, location) {
   showError(null);
   showCacheStatus(null);
   showLoading(true);
   state.result = null;
   state.allCultures = [];
-  
+
   // Check cache first
-  const cached = checkCache(hex);
+  const cached = checkCache(hex, location);
   if (cached) {
     state.cacheStatus = 'hit';
     state.result = cached;
@@ -229,7 +230,7 @@ async function fetchColorDescription(hex) {
     renderResults();
     return;
   }
-  
+
   state.cacheStatus = 'miss';
   
   try {
@@ -247,14 +248,16 @@ async function fetchColorDescription(hex) {
           role: 'user',
           content: `Research the cultural significance of this color: ${hex}
 
-Use web search to find accurate, sourced information about how different cultures perceive and use this color.
+Focus specifically on ${location} culture/region.
+
+Use web search to find accurate, sourced information about how this culture perceives and uses this color.
 
 After researching, return ONLY valid JSON with no additional text, in this exact format:
 {
   "colorSummary": "A brief 1-2 sentence description of the color itself",
   "cultures": [
     {
-      "culture": "Culture name",
+      "culture": "${location}",
       "significance": "2-3 sentences about what this color means in this culture",
       "adjectives": ["adj1", "adj2", "adj3", "adj4", "adj5", "adj6"],
       "nouns": ["noun1", "noun2", "noun3", "noun4", "noun5", "noun6"],
@@ -265,8 +268,8 @@ After researching, return ONLY valid JSON with no additional text, in this exact
   ]
 }
 
-Include 4-5 different cultures from around the world. For each culture, provide:
-- The cultural/regional name
+Provide:
+- The cultural/regional name (${location})
 - The significance and meaning of this color in that culture (based on your research)
 - 5-6 evocative adjectives that capture how this culture perceives or emotionally relates to the color
 - 5-6 nouns (objects, concepts, symbols) that this culture associates with the color
@@ -298,10 +301,10 @@ Be specific and insightful about cultural associations. Only include real, worki
     
     const parsed = JSON.parse(jsonMatch[0].replace(/```json|```/g, '').trim());
     console.log('Parsed result:', parsed);
-    
+
     // Save to cache
-    saveToCache(hex, parsed);
-    
+    saveToCache(hex, location, parsed);
+
     state.result = parsed;
     state.allCultures = parsed.cultures?.map(c => c.culture) || [];
     showCacheStatus('miss');
@@ -317,10 +320,10 @@ Be specific and insightful about cultural associations. Only include real, worki
 
 async function fetchMoreCultures() {
   if (!state.selectedColor) return;
-  
+
   showError(null);
   showLoadingMore(true);
-  
+
   const excludeList = state.allCultures.join(', ');
   
   try {
@@ -352,9 +355,9 @@ After researching, return ONLY valid JSON with no additional text, in this exact
   ]
 }
 
-Include 4-5 DIFFERENT cultures from around the world. DO NOT include any of these cultures that were already covered: ${excludeList}
+Include 3-4 DIFFERENT cultures from around the world. DO NOT include any of these cultures that were already covered: ${excludeList}
 
-For each NEW culture, provide:
+Be sure to explore diverse regions and perspectives. For each NEW culture, provide:
 - The cultural/regional name
 - The significance and meaning of this color in that culture (based on your research)
 - 5-6 evocative adjectives that capture how this culture perceives or emotionally relates to the color
@@ -394,12 +397,24 @@ function onColorSelected(hex, position) {
   state.selectedColor = hex;
   state.selectedPosition = position;
   showSelectedColor(hex, position);
+  updateSearchButtonState();
   // Don't auto-fetch - wait for button click
 }
 
+function onLocationChange() {
+  const select = document.getElementById('location-select');
+  state.selectedLocation = select.value;
+  updateSearchButtonState();
+}
+
+function updateSearchButtonState() {
+  const btn = document.getElementById('search-btn');
+  btn.disabled = !state.selectedColor || !state.selectedLocation;
+}
+
 function onSearchClick() {
-  if (state.selectedColor) {
-    fetchColorDescription(state.selectedColor);
+  if (state.selectedColor && state.selectedLocation) {
+    fetchColorDescription(state.selectedColor, state.selectedLocation);
   }
 }
 
@@ -407,9 +422,12 @@ function onSearchClick() {
 // Initialization
 // ============================================
 function initApp() {
+  // Location selector
+  document.getElementById('location-select').addEventListener('change', onLocationChange);
+
   // Search button
   document.getElementById('search-btn').addEventListener('click', onSearchClick);
-  
+
   // Explore more button
   document.getElementById('explore-more').addEventListener('click', fetchMoreCultures);
 }
