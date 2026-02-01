@@ -67,18 +67,88 @@ function saveToCache(hex, location, data) {
 }
 
 // ============================================
+// Theme Helpers
+// ============================================
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+function applyColorTheme(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return;
+
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+
+  // Generate theme colors based on the selected color
+  const baseColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 50)}%, ${Math.min(Math.max(hsl.l, 45), 55)}%)`;
+  const hoverColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 50)}%, ${Math.min(Math.max(hsl.l, 55), 65)}%)`;
+  const lightColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 40)}%, ${Math.min(Math.max(hsl.l, 45), 55)}%, 0.2)`;
+  const borderColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 40)}%, ${Math.min(Math.max(hsl.l, 45), 55)}%, 0.4)`;
+  const tagColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 35)}%, ${Math.min(Math.max(hsl.l, 65), 75)}%)`;
+  const linkColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 40)}%, ${Math.min(Math.max(hsl.l, 60), 70)}%)`;
+  const linkHoverColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 40)}%, ${Math.min(Math.max(hsl.l, 75), 85)}%)`;
+
+  document.documentElement.style.setProperty('--accent-color', baseColor);
+  document.documentElement.style.setProperty('--accent-color-hover', hoverColor);
+  document.documentElement.style.setProperty('--accent-color-light', lightColor);
+  document.documentElement.style.setProperty('--accent-color-border', borderColor);
+  document.documentElement.style.setProperty('--accent-color-tag', tagColor);
+  document.documentElement.style.setProperty('--accent-color-link', linkColor);
+  document.documentElement.style.setProperty('--accent-color-link-hover', linkHoverColor);
+}
+
+function resetColorTheme() {
+  // Reset to greyscale
+  document.documentElement.style.setProperty('--accent-color', '#6b7280');
+  document.documentElement.style.setProperty('--accent-color-hover', '#9ca3af');
+  document.documentElement.style.setProperty('--accent-color-light', 'rgba(107, 114, 128, 0.2)');
+  document.documentElement.style.setProperty('--accent-color-border', 'rgba(107, 114, 128, 0.4)');
+  document.documentElement.style.setProperty('--accent-color-tag', 'rgb(156, 163, 175)');
+  document.documentElement.style.setProperty('--accent-color-link', '#9ca3af');
+  document.documentElement.style.setProperty('--accent-color-link-hover', '#d1d5db');
+}
+
+// ============================================
 // UI Updates
 // ============================================
-function showSelectedColor(hex, position) {
+function showSelectedColor(hex) {
   const container = document.getElementById('selected-color');
   const swatch = document.getElementById('color-swatch');
   const hexText = document.getElementById('color-hex');
-  const posText = document.getElementById('color-position');
-  
+
   container.classList.remove('hidden');
   swatch.style.backgroundColor = hex;
   hexText.textContent = hex.toUpperCase();
-  posText.textContent = `Position: ${position.col}${position.row}`;
 }
 
 function showLoading(show) {
@@ -133,6 +203,11 @@ function renderResults() {
   if (!state.result) {
     container.classList.add('hidden');
     return;
+  }
+
+  // Apply color theme when results are available
+  if (state.selectedColor) {
+    applyColorTheme(state.selectedColor);
   }
 
   container.classList.remove('hidden');
@@ -302,8 +377,15 @@ IMPORTANT: You MUST include at least 2 sources with valid URLs. More sources are
 function onColorSelected(hex, position) {
   state.selectedColor = hex;
   state.selectedPosition = position;
-  showSelectedColor(hex, position);
+  showSelectedColor(hex);
   updateSearchButtonState();
+
+  // Reset theme to greyscale when new color is selected
+  resetColorTheme();
+
+  // Hide previous results
+  document.getElementById('results').classList.add('hidden');
+
   // Don't auto-fetch - wait for button click
 }
 
