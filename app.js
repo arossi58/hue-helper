@@ -93,8 +93,8 @@ function showLoadingMore(show) {
   const btn = document.getElementById('explore-more');
   btn.disabled = show;
   btn.innerHTML = show 
-    ? '<div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Discovering more cultures...'
-    : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg> Explore More Cultures';
+    ? '<div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Researching...'
+    : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg> Explore More';
 }
 
 function showError(message) {
@@ -204,7 +204,7 @@ function renderResults() {
   });
   
   // Count display
-  countEl.textContent = `${state.allCultures.length} cultures explored`;
+  //countEl.textContent = `${state.allCultures.length} cultures explored`;
   
   exploreBtn.disabled = state.loadingMore;
 }
@@ -246,21 +246,19 @@ async function fetchColorDescription(hex, location) {
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{
           role: 'user',
-          content: `Research the cultural significance of this color: ${hex}
+           content: `Research what this color means and represents in different countries: ${hex}
 
-Focus specifically on ${location} culture/region.
-
-Use web search to find accurate, sourced information about how this culture perceives and uses this color.
+Use web search to find accurate, sourced information about how this color is perceived, used, and symbolized in specific countries.
 
 After researching, return ONLY valid JSON with no additional text, in this exact format:
 {
   "colorSummary": "A brief 1-2 sentence description of the color itself",
-  "cultures": [
+  "countries": [
     {
-      "culture": "${location}",
-      "significance": "2-3 sentences about what this color means in this culture",
+      "country": "Country name",
+      "significance": "2-3 sentences about what this color means, symbolizes, or represents in this country",
       "adjectives": ["adj1", "adj2", "adj3", "adj4", "adj5", "adj6"],
-      "nouns": ["noun1", "noun2", "noun3", "noun4", "noun5", "noun6"],
+      "nouns": ["specific noun 1", "specific noun 2", "specific noun 3", "specific noun 4", "specific noun 5", "specific noun 6"],
       "sources": [
         {"title": "Source title", "url": "https://example.com/article"}
       ]
@@ -268,14 +266,14 @@ After researching, return ONLY valid JSON with no additional text, in this exact
   ]
 }
 
-Provide:
-- The cultural/regional name (${location})
-- The significance and meaning of this color in that culture (based on your research)
-- 5-6 evocative adjectives that capture how this culture perceives or emotionally relates to the color
-- 5-6 nouns (objects, concepts, symbols) that this culture associates with the color
-- 1-2 source links that support the cultural information
+Include 4-5 different countries from around the world. For each country, provide:
+- The country name
+- The significance: what this color means, symbolizes, or represents in that country (traditions, holidays, politics, sports, religion, etc.)
+- 5-6 adjectives that capture emotional or perceptual qualities associated with this color in that country
+- 5-6 SPECIFIC nouns — not generic words like "nature" or "life", but concrete things like "Manchester United jerseys", "Chinese New Year envelopes", "Japanese torii gates", "Irish shamrocks", "Brazilian Carnival costumes"
+- 1-2 source links that support the information
 
-Be specific and insightful about cultural associations. Only include real, working URLs from your search results.`
+Be specific and concrete. Nouns should be things you can picture or point to, not abstract concepts.`
         }]
       })
     });
@@ -336,18 +334,18 @@ async function fetchMoreCultures() {
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{
           role: 'user',
-          content: `Research the cultural significance of this color: ${state.selectedColor}
+          content: `Research what this color means and represents in different countries: ${state.selectedColor}
 
-Use web search to find accurate, sourced information about how different cultures perceive and use this color.
+Use web search to find accurate, sourced information about how this color is perceived, used, and symbolized in specific countries.
 
 After researching, return ONLY valid JSON with no additional text, in this exact format:
 {
-  "cultures": [
+  "countries": [
     {
-      "culture": "Culture name",
-      "significance": "2-3 sentences about what this color means in this culture",
+      "country": "Country name",
+      "significance": "2-3 sentences about what this color means, symbolizes, or represents in this country",
       "adjectives": ["adj1", "adj2", "adj3", "adj4", "adj5", "adj6"],
-      "nouns": ["noun1", "noun2", "noun3", "noun4", "noun5", "noun6"],
+      "nouns": ["specific noun 1", "specific noun 2", "specific noun 3", "specific noun 4", "specific noun 5", "specific noun 6"],
       "sources": [
         {"title": "Source title", "url": "https://example.com/article"}
       ]
@@ -355,16 +353,16 @@ After researching, return ONLY valid JSON with no additional text, in this exact
   ]
 }
 
-Include 3-4 DIFFERENT cultures from around the world. DO NOT include any of these cultures that were already covered: ${excludeList}
+Include 4-5 DIFFERENT countries. DO NOT include any of these countries that were already covered: ${excludeList}
 
-Be sure to explore diverse regions and perspectives. For each NEW culture, provide:
-- The cultural/regional name
-- The significance and meaning of this color in that culture (based on your research)
-- 5-6 evocative adjectives that capture how this culture perceives or emotionally relates to the color
-- 5-6 nouns (objects, concepts, symbols) that this culture associates with the color
-- 1-2 source links that support the cultural information
+For each NEW country, provide:
+- The country name
+- The significance: what this color means, symbolizes, or represents in that country
+- 5-6 adjectives that capture emotional or perceptual qualities associated with this color in that country
+- 5-6 SPECIFIC nouns — not generic words like "nature" or "life", but concrete things like "Manchester United jerseys", "Chinese New Year envelopes", "Japanese torii gates", "Irish shamrocks", "Brazilian Carnival costumes"
+- 1-2 source links that support the information
 
-Be specific and insightful about cultural associations. Explore lesser-known cultures, historical civilizations, indigenous peoples, or regional subcultures. Only include real, working URLs from your search results.`
+Be specific and concrete. Explore countries from different continents. Nouns should be things you can picture or point to, not abstract concepts.`
         }]
       })
     });
