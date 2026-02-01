@@ -239,7 +239,10 @@ Return ONLY valid JSON:
       "significance": "2-3 sentences about meaning in ${location}",
       "adjectives": ["adj1", "adj2", "adj3", "adj4", "adj5"],
       "nouns": ["specific noun 1", "specific noun 2", "specific noun 3", "specific noun 4", "specific noun 5"],
-      "sources": [{"title": "Source title", "url": "https://example.com"}]
+      "sources": [
+        {"title": "Source title 1", "url": "https://example1.com"},
+        {"title": "Source title 2", "url": "https://example2.com"}
+      ]
     }
   ]
 }
@@ -248,7 +251,9 @@ Include:
 - Significance in ${location} (traditions, holidays, politics, sports, religion)
 - 5 adjectives for emotional/perceptual qualities
 - 5 SPECIFIC concrete nouns (like "Manchester United jerseys", "Chinese New Year envelopes")
-- 1-2 source links`
+- AT LEAST 2 source links (provide more if available)
+
+IMPORTANT: You MUST include at least 2 sources with valid URLs. More sources are encouraged if available.`
         }]
       })
     });

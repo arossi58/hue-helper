@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Color Culture</title>
+  <title>Hue Helper</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Color Culture</h1>
-      <p class="subtitle">Click a color to explore its cultural significance around the world</p>
+      <h1>Hue Helper</h1>
+      <p class="subtitle">Click a color to better understand it</p>
     </header>
 
     <main>
@@ -236,14 +236,14 @@
             <circle cx="11" cy="11" r="8"/>
             <path d="M21 21l-4.35-4.35"/>
           </svg>
-          Explore Culture
+          Research color
         </button>
       </div>
 
       <!-- Loading state -->
       <div id="loading" class="hidden">
         <div class="spinner"></div>
-        <span>Researching cultural significance...</span>
+        <span>Researching color...</span>
       </div>
 
       <!-- Error state -->
@@ -262,16 +262,10 @@
           </div>
         </div>
 
-        <h3 class="section-title">Cultural Significance</h3>
+        <h3 class="section-title">Results</h3>
         
         <div id="cultures-list"></div>
 
-        <button id="explore-more" class="btn-secondary">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-          </svg>
-          Explore More Cultures
-        </button>
 
         <p id="cultures-count"></p>
       </div>
