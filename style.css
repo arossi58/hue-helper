@@ -99,31 +99,30 @@ h1 {
   font-weight: 500;
 }
 
-.location-dropdown {
+.location-input {
   padding: 0.625rem 0.875rem;
   background: #1f2937;
   border: 1px solid #374151;
   border-radius: 8px;
   color: #e5e7eb;
   font-size: 0.95rem;
-  cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
+  width: 100%;
 }
 
-.location-dropdown:hover {
+.location-input::placeholder {
+  color: #6b7280;
+}
+
+.location-input:hover {
   border-color: #4b5563;
 }
 
-.location-dropdown:focus {
+.location-input:focus {
   outline: none;
   border-color: #9333ea;
   box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
-}
-
-.location-dropdown option {
-  background: #1f2937;
-  color: #e5e7eb;
 }
 
 /* Primary button */

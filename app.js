@@ -402,8 +402,8 @@ function onColorSelected(hex, position) {
 }
 
 function onLocationChange() {
-  const select = document.getElementById('location-select');
-  state.selectedLocation = select.value;
+  const input = document.getElementById('location-select');
+  state.selectedLocation = input.value.trim();
   updateSearchButtonState();
 }
 
@@ -422,8 +422,10 @@ function onSearchClick() {
 // Initialization
 // ============================================
 function initApp() {
-  // Location selector
-  document.getElementById('location-select').addEventListener('change', onLocationChange);
+  // Location selector - listen to both input and change events
+  const locationInput = document.getElementById('location-select');
+  locationInput.addEventListener('input', onLocationChange);
+  locationInput.addEventListener('change', onLocationChange);
 
   // Search button
   document.getElementById('search-btn').addEventListener('click', onSearchClick);
