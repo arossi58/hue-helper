@@ -200,7 +200,6 @@ async function fetchColorDescription(hex, location) {
   showCacheStatus(null);
   showLoading(true);
   state.result = null;
-  state.allCultures = [];
 
   // Check cache first
   const cached = checkCache(hex, location);
@@ -225,38 +224,31 @@ async function fetchColorDescription(hex, location) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: CONFIG.API_MODEL,
-        max_tokens: 4096,
+        max_tokens: 2048,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{
           role: 'user',
-           content: `Research what the color ${hex} means and represents specifically in ${location}.
+           content: `Research color ${hex} in ${location}. Use web search for accurate information.
 
-Use web search to find accurate, sourced information about how this color is perceived, used, and symbolized in ${location}.
-
-After researching, return ONLY valid JSON with no additional text, in this exact format:
+Return ONLY valid JSON:
 {
-  "colorSummary": "A brief 1-2 sentence description of the color itself",
+  "colorSummary": "1-2 sentence description of the color",
   "countries": [
     {
       "country": "${location}",
-      "significance": "2-3 sentences about what this color means, symbolizes, or represents in ${location}",
-      "adjectives": ["adj1", "adj2", "adj3", "adj4", "adj5", "adj6"],
-      "nouns": ["specific noun 1", "specific noun 2", "specific noun 3", "specific noun 4", "specific noun 5", "specific noun 6"],
-      "sources": [
-        {"title": "Source title", "url": "https://example.com/article"}
-      ]
+      "significance": "2-3 sentences about meaning in ${location}",
+      "adjectives": ["adj1", "adj2", "adj3", "adj4", "adj5"],
+      "nouns": ["specific noun 1", "specific noun 2", "specific noun 3", "specific noun 4", "specific noun 5"],
+      "sources": [{"title": "Source title", "url": "https://example.com"}]
     }
   ]
 }
 
-Research ONLY ${location}. Provide:
-- The country name: "${location}"
-- The significance: what this color means, symbolizes, or represents in ${location} (traditions, holidays, politics, sports, religion, etc.)
-- 5-6 adjectives that capture emotional or perceptual qualities associated with this color in ${location}
-- 5-6 SPECIFIC nouns — not generic words like "nature" or "life", but concrete things you can picture or point to (like "Manchester United jerseys", "Chinese New Year envelopes", "Japanese torii gates", etc.)
-- 1-2 source links that support the information
-
-Be specific and concrete. Nouns should be things you can picture or point to, not abstract concepts.`
+Include:
+- Significance in ${location} (traditions, holidays, politics, sports, religion)
+- 5 adjectives for emotional/perceptual qualities
+- 5 SPECIFIC concrete nouns (like "Manchester United jerseys", "Chinese New Year envelopes")
+- 1-2 source links`
         }]
       })
     });
