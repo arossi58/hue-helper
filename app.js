@@ -233,6 +233,9 @@ async function fetchColorDescription(hex) {
   state.cacheStatus = 'miss';
   
   try {
+    console.log('Fetching from:', CONFIG.API_ENDPOINT);
+    console.log('Color:', hex);
+    
     const response = await fetch(CONFIG.API_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -274,13 +277,27 @@ Be specific and insightful about cultural associations. Only include real, worki
       })
     });
     
+    console.log('Response status:', response.status);
+    
     const data = await response.json();
+    console.log('API Response:', data);
+    
+    // Check for API errors
+    if (data.error) {
+      throw new Error(data.error.message || data.error);
+    }
+    
     const text = data.content?.filter(i => i.type === 'text').map(i => i.text || '').join('') || '';
+    console.log('Extracted text:', text.substring(0, 500));
     
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('No JSON found in response');
+    if (!jsonMatch) {
+      console.error('No JSON found in text:', text);
+      throw new Error('No JSON found in response');
+    }
     
     const parsed = JSON.parse(jsonMatch[0].replace(/```json|```/g, '').trim());
+    console.log('Parsed result:', parsed);
     
     // Save to cache
     saveToCache(hex, parsed);
@@ -291,7 +308,7 @@ Be specific and insightful about cultural associations. Only include real, worki
     
   } catch (err) {
     console.error('API Error:', err);
-    showError('Failed to generate color analysis. Please try again.');
+    showError(`Failed to generate color analysis: ${err.message}`);
   } finally {
     showLoading(false);
     renderResults();
@@ -377,13 +394,22 @@ function onColorSelected(hex, position) {
   state.selectedColor = hex;
   state.selectedPosition = position;
   showSelectedColor(hex, position);
-  fetchColorDescription(hex);
+  // Don't auto-fetch - wait for button click
+}
+
+function onSearchClick() {
+  if (state.selectedColor) {
+    fetchColorDescription(state.selectedColor);
+  }
 }
 
 // ============================================
 // Initialization
 // ============================================
 function initApp() {
+  // Search button
+  document.getElementById('search-btn').addEventListener('click', onSearchClick);
+  
   // Explore more button
   document.getElementById('explore-more').addEventListener('click', fetchMoreCultures);
 }

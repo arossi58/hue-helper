@@ -63,11 +63,13 @@ h1 {
   height: 48px;
   border-radius: 8px;
   border: 1px solid #374151;
+  flex-shrink: 0;
 }
 
 #color-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 #color-hex {
@@ -79,6 +81,32 @@ h1 {
 #color-position {
   font-size: 0.875rem;
   color: #6b7280;
+}
+
+/* Primary button */
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #9333ea;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #a855f7;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Loading */
