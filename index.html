@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Culture</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Color Culture</h1>
+      <p class="subtitle">Click a color to explore its cultural significance around the world</p>
+    </header>
+
+    <main>
+      <!-- p5.js canvas will be inserted here -->
+      <div id="canvas-container"></div>
+      
+      <!-- Selected color indicator -->
+      <div id="selected-color" class="hidden">
+        <div id="color-swatch"></div>
+        <div id="color-info">
+          <span id="color-hex"></span>
+          <span id="color-position"></span>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div id="loading" class="hidden">
+        <div class="spinner"></div>
+        <span>Researching cultural significance...</span>
+      </div>
+
+      <!-- Error state -->
+      <div id="error" class="hidden"></div>
+
+      <!-- Cache status -->
+      <div id="cache-status" class="hidden"></div>
+
+      <!-- Results section -->
+      <div id="results" class="hidden">
+        <div id="color-overview">
+          <div id="overview-swatch"></div>
+          <div id="overview-text">
+            <h2>Color Overview</h2>
+            <p id="color-summary"></p>
+          </div>
+        </div>
+
+        <h3 class="section-title">Cultural Significance</h3>
+        
+        <div id="cultures-list"></div>
+
+        <button id="explore-more" class="btn-secondary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Explore More Cultures
+        </button>
+
+        <p id="cultures-count"></p>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="sketch.js"></script>
+</body>
+</html>
