@@ -16,9 +16,7 @@ let state = {
   selectedPosition: null,
   selectedLocation: null,
   result: null,
-  allCultures: [],
   loading: false,
-  loadingMore: false,
   error: null,
   cacheStatus: null,
 };
@@ -88,14 +86,6 @@ function showLoading(show) {
   document.getElementById('loading').classList.toggle('hidden', !show);
 }
 
-function showLoadingMore(show) {
-  state.loadingMore = show;
-  const btn = document.getElementById('explore-more');
-  btn.disabled = show;
-  btn.innerHTML = show 
-    ? '<div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Researching...'
-    : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg> Explore More';
-}
 
 function showError(message) {
   const el = document.getElementById('error');
@@ -138,57 +128,55 @@ function renderResults() {
   const container = document.getElementById('results');
   const overviewSwatch = document.getElementById('overview-swatch');
   const summaryEl = document.getElementById('color-summary');
-  const culturesListEl = document.getElementById('cultures-list');
-  const countEl = document.getElementById('cultures-count');
-  const exploreBtn = document.getElementById('explore-more');
-  
+  const researchListEl = document.getElementById('cultures-list');
+
   if (!state.result) {
     container.classList.add('hidden');
     return;
   }
-  
+
   container.classList.remove('hidden');
-  
+
   // Overview
   overviewSwatch.style.backgroundColor = state.selectedColor;
   summaryEl.textContent = state.result.colorSummary || '';
-  
-  // Cultures list
-  culturesListEl.innerHTML = '';
-  
-  state.result.cultures?.forEach(culture => {
+
+  // Research results
+  researchListEl.innerHTML = '';
+
+  state.result.countries?.forEach(country => {
     const card = document.createElement('div');
     card.className = 'culture-card';
-    
+
     card.innerHTML = `
       <div class="culture-header">
         <div class="culture-dot" style="background-color: ${state.selectedColor}"></div>
-        <h4 class="culture-name">${culture.culture}</h4>
+        <h4 class="culture-name">${country.country}</h4>
       </div>
-      <p class="culture-significance">${culture.significance}</p>
-      
+      <p class="culture-significance">${country.significance}</p>
+
       <div class="words-section">
         <p class="words-label">Adjectives</p>
         <div class="words-list">
-          ${(culture.adjectives || []).map(adj => 
+          ${(country.adjectives || []).map(adj =>
             `<span class="word-tag adjective">${adj}</span>`
           ).join('')}
         </div>
       </div>
-      
+
       <div class="words-section">
         <p class="words-label">Associated With</p>
         <div class="words-list">
-          ${(culture.nouns || []).map(noun => 
+          ${(country.nouns || []).map(noun =>
             `<span class="word-tag noun">${noun}</span>`
           ).join('')}
         </div>
       </div>
-      
-      ${culture.sources?.length ? `
+
+      ${country.sources?.length ? `
         <div class="sources-section">
           <p class="sources-label">Sources</p>
-          ${culture.sources.map(src => `
+          ${country.sources.map(src => `
             <a href="${src.url}" target="_blank" rel="noopener noreferrer" class="source-link">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -199,14 +187,9 @@ function renderResults() {
         </div>
       ` : ''}
     `;
-    
-    culturesListEl.appendChild(card);
+
+    researchListEl.appendChild(card);
   });
-  
-  // Count display
-  //countEl.textContent = `${state.allCultures.length} cultures explored`;
-  
-  exploreBtn.disabled = state.loadingMore;
 }
 
 // ============================================
@@ -224,7 +207,6 @@ async function fetchColorDescription(hex, location) {
   if (cached) {
     state.cacheStatus = 'hit';
     state.result = cached;
-    state.allCultures = cached.cultures?.map(c => c.culture) || [];
     showCacheStatus('hit');
     showLoading(false);
     renderResults();
@@ -236,7 +218,8 @@ async function fetchColorDescription(hex, location) {
   try {
     console.log('Fetching from:', CONFIG.API_ENDPOINT);
     console.log('Color:', hex);
-    
+    console.log('Country:', location);
+
     const response = await fetch(CONFIG.API_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -246,17 +229,17 @@ async function fetchColorDescription(hex, location) {
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{
           role: 'user',
-           content: `Research what this color means and represents in different countries: ${hex}
+           content: `Research what the color ${hex} means and represents specifically in ${location}.
 
-Use web search to find accurate, sourced information about how this color is perceived, used, and symbolized in specific countries.
+Use web search to find accurate, sourced information about how this color is perceived, used, and symbolized in ${location}.
 
 After researching, return ONLY valid JSON with no additional text, in this exact format:
 {
   "colorSummary": "A brief 1-2 sentence description of the color itself",
   "countries": [
     {
-      "country": "Country name",
-      "significance": "2-3 sentences about what this color means, symbolizes, or represents in this country",
+      "country": "${location}",
+      "significance": "2-3 sentences about what this color means, symbolizes, or represents in ${location}",
       "adjectives": ["adj1", "adj2", "adj3", "adj4", "adj5", "adj6"],
       "nouns": ["specific noun 1", "specific noun 2", "specific noun 3", "specific noun 4", "specific noun 5", "specific noun 6"],
       "sources": [
@@ -266,11 +249,11 @@ After researching, return ONLY valid JSON with no additional text, in this exact
   ]
 }
 
-Include 4-5 different countries from around the world. For each country, provide:
-- The country name
-- The significance: what this color means, symbolizes, or represents in that country (traditions, holidays, politics, sports, religion, etc.)
-- 5-6 adjectives that capture emotional or perceptual qualities associated with this color in that country
-- 5-6 SPECIFIC nouns — not generic words like "nature" or "life", but concrete things like "Manchester United jerseys", "Chinese New Year envelopes", "Japanese torii gates", "Irish shamrocks", "Brazilian Carnival costumes"
+Research ONLY ${location}. Provide:
+- The country name: "${location}"
+- The significance: what this color means, symbolizes, or represents in ${location} (traditions, holidays, politics, sports, religion, etc.)
+- 5-6 adjectives that capture emotional or perceptual qualities associated with this color in ${location}
+- 5-6 SPECIFIC nouns — not generic words like "nature" or "life", but concrete things you can picture or point to (like "Manchester United jerseys", "Chinese New Year envelopes", "Japanese torii gates", etc.)
 - 1-2 source links that support the information
 
 Be specific and concrete. Nouns should be things you can picture or point to, not abstract concepts.`
@@ -304,7 +287,6 @@ Be specific and concrete. Nouns should be things you can picture or point to, no
     saveToCache(hex, location, parsed);
 
     state.result = parsed;
-    state.allCultures = parsed.cultures?.map(c => c.culture) || [];
     showCacheStatus('miss');
     
   } catch (err) {
@@ -316,77 +298,6 @@ Be specific and concrete. Nouns should be things you can picture or point to, no
   }
 }
 
-async function fetchMoreCultures() {
-  if (!state.selectedColor) return;
-
-  showError(null);
-  showLoadingMore(true);
-
-  const excludeList = state.allCultures.join(', ');
-  
-  try {
-    const response = await fetch(CONFIG.API_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: CONFIG.API_MODEL,
-        max_tokens: 4096,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{
-          role: 'user',
-          content: `Research what this color means and represents in different countries: ${state.selectedColor}
-
-Use web search to find accurate, sourced information about how this color is perceived, used, and symbolized in specific countries.
-
-After researching, return ONLY valid JSON with no additional text, in this exact format:
-{
-  "countries": [
-    {
-      "country": "Country name",
-      "significance": "2-3 sentences about what this color means, symbolizes, or represents in this country",
-      "adjectives": ["adj1", "adj2", "adj3", "adj4", "adj5", "adj6"],
-      "nouns": ["specific noun 1", "specific noun 2", "specific noun 3", "specific noun 4", "specific noun 5", "specific noun 6"],
-      "sources": [
-        {"title": "Source title", "url": "https://example.com/article"}
-      ]
-    }
-  ]
-}
-
-Include 4-5 DIFFERENT countries. DO NOT include any of these countries that were already covered: ${excludeList}
-
-For each NEW country, provide:
-- The country name
-- The significance: what this color means, symbolizes, or represents in that country
-- 5-6 adjectives that capture emotional or perceptual qualities associated with this color in that country
-- 5-6 SPECIFIC nouns — not generic words like "nature" or "life", but concrete things like "Manchester United jerseys", "Chinese New Year envelopes", "Japanese torii gates", "Irish shamrocks", "Brazilian Carnival costumes"
-- 1-2 source links that support the information
-
-Be specific and concrete. Explore countries from different continents. Nouns should be things you can picture or point to, not abstract concepts.`
-        }]
-      })
-    });
-    
-    const data = await response.json();
-    const text = data.content?.filter(i => i.type === 'text').map(i => i.text || '').join('') || '';
-    
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('No JSON found in response');
-    
-    const parsed = JSON.parse(jsonMatch[0].replace(/```json|```/g, '').trim());
-    
-    // Append new cultures
-    state.result.cultures = [...(state.result.cultures || []), ...(parsed.cultures || [])];
-    state.allCultures = [...state.allCultures, ...(parsed.cultures?.map(c => c.culture) || [])];
-    
-  } catch (err) {
-    console.error('API Error:', err);
-    showError('Failed to load more cultures. Please try again.');
-  } finally {
-    showLoadingMore(false);
-    renderResults();
-  }
-}
 
 // ============================================
 // Event Handlers
@@ -427,9 +338,6 @@ function initApp() {
 
   // Search button
   document.getElementById('search-btn').addEventListener('click', onSearchClick);
-
-  // Explore more button
-  document.getElementById('explore-more').addEventListener('click', fetchMoreCultures);
 }
 
 // Initialize when DOM is ready
