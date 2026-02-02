@@ -323,7 +323,7 @@ async function fetchColorDescription(hex, location) {
                       }
 
                       Include:
-                      - Significance in ${location} — explore traditions, holidays, religion, national symbols, sports, fashion, art, architecture, nature, food, ceremonies (weddings, funerals, festivals), folklore, superstitions, or any other notable associations
+                      - Significance in ${location} — at least 5 different examples from the following categories: traditions, holidays, religion, national symbols, sports, fashion, art, architecture, nature, food, ceremonies (weddings, funerals, festivals), folklore, superstitions, or any other notable associations
                       - 5 adjectives for emotional/perceptual qualities
                       - 5 SPECIFIC concrete nouns (like "Falmingo feather", "Salmon filet")
                       - AT LEAST 2 source links (provide more if available)
