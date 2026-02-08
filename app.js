@@ -391,10 +391,19 @@ async function generateShadeGrid(hex) {
     shadeItem.className = 'shade-item';
 
     shadeItem.innerHTML = `
-      <div class="shade-swatch" style="background-color: ${shade.hex}"></div>
+      <div class="shade-swatch" style="background-color: ${shade.hex}" data-hex="${shade.hex}"></div>
       <div class="shade-name">${shade.name}</div>
       <div class="shade-hex">${shade.hex.toUpperCase()}</div>
     `;
+
+    // Make the swatch clickable
+    const swatch = shadeItem.querySelector('.shade-swatch');
+    swatch.style.cursor = 'pointer';
+    swatch.addEventListener('click', () => {
+      onColorSelected(shade.hex, null);
+      // Scroll to top to see the selected color
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 
     shadeGrid.appendChild(shadeItem);
   });
