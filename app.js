@@ -600,6 +600,32 @@ async function fetchColorDescription(hex, location) {
 
 
 // ============================================
+// Geolocation
+// ============================================
+async function detectUserCountry() {
+  const locationInput = document.getElementById('location-select');
+
+  try {
+    const response = await fetch('https://ipapi.co/json/');
+    const data = await response.json();
+
+    if (data.country_name) {
+      locationInput.value = data.country_name;
+      locationInput.placeholder = data.country_name;
+      state.selectedLocation = data.country_name;
+      updateSearchButtonState();
+      console.log('Auto-detected country:', data.country_name);
+    } else {
+      locationInput.placeholder = 'Type to search countries...';
+    }
+  } catch (error) {
+    console.log('Could not auto-detect country:', error);
+    locationInput.placeholder = 'Type to search countries...';
+    // Silently fail - user can still manually enter their country
+  }
+}
+
+// ============================================
 // Event Handlers
 // ============================================
 function onColorSelected(hex, position) {
@@ -645,6 +671,9 @@ function initApp() {
 
   // Search button
   document.getElementById('search-btn').addEventListener('click', onSearchClick);
+
+  // Auto-detect user's country
+  detectUserCountry();
 }
 
 // Initialize when DOM is ready
