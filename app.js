@@ -197,7 +197,7 @@ function applyColorTheme(hex) {
   const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
 
   // Background colors (dark theme)
-  const darkBg = { r: 3, g: 7, h: 18 }; // #030712
+  const darkBg = { r: 3, g: 7, b: 18 }; // #030712
   const cardBg = { r: 17, g: 24, b: 39 }; // #111827
 
   // Base color for buttons (white text on colored background)
@@ -214,15 +214,15 @@ function applyColorTheme(hex) {
   const borderColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 40)}%, 50%, 0.4)`;
 
   // Tag color (text on dark card background)
-  const tagLightness = adjustLightnessForContrast(hsl.h, Math.max(hsl.s, 50), 70, cardBg, 4.5);
-  const tagColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 50)}%, ${tagLightness}%)`;
+  const tagLightness = adjustLightnessForContrast(hsl.h, Math.max(hsl.s, 60), 75, cardBg, 4.5);
+  const tagColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 60)}%, ${tagLightness}%)`;
 
-  // Link colors (text on dark background)
-  const linkLightness = adjustLightnessForContrast(hsl.h, Math.max(hsl.s, 50), 70, darkBg, 4.5);
-  const linkColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 50)}%, ${linkLightness}%)`;
+  // Link colors (text on dark background) - higher lightness for better contrast
+  const linkLightness = adjustLightnessForContrast(hsl.h, Math.max(hsl.s, 60), 80, darkBg, 4.5);
+  const linkColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 60)}%, ${linkLightness}%)`;
 
-  const linkHoverLightness = Math.min(linkLightness + 10, 95);
-  const linkHoverColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 50)}%, ${linkHoverLightness}%)`;
+  const linkHoverLightness = Math.min(linkLightness + 8, 95);
+  const linkHoverColor = `hsl(${hsl.h}, ${Math.max(hsl.s, 60)}%, ${linkHoverLightness}%)`;
 
   document.documentElement.style.setProperty('--accent-color', baseColor);
   document.documentElement.style.setProperty('--accent-color-hover', hoverColor);
