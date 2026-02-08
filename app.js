@@ -7,7 +7,7 @@ const CONFIG = {
   // Vercel serverless function endpoint
   API_ENDPOINT: 'https://hue-helper.vercel.app/api/color-culture',
   // Client-side rate limiting (to prevent excessive API calls)
-  MAX_API_CALLS_PER_MINUTE: 5,
+  MAX_API_CALLS_PER_MINUTE: 10, // Increase to 10 calls per minute
 };
 
 // ============================================
