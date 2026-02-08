@@ -5,8 +5,8 @@
 
 const COLS = 9;
 const ROWS = 1;
-const CELL_SIZE = 80;
-const PADDING = 8;
+const BASE_CELL_SIZE = 80;
+const BASE_PADDING = 8;
 
 // Define the 9 colors
 const COLORS = [
@@ -25,18 +25,39 @@ let colorGrid = [];
 let selectedCell = null;
 let hoverCell = null;
 let canvasWidth, canvasHeight;
+let cellSize, padding;
 
 function setup() {
-  canvasWidth = COLS * (CELL_SIZE + PADDING) + PADDING;
-  canvasHeight = ROWS * (CELL_SIZE + PADDING) + PADDING;
-
-  const canvas = createCanvas(canvasWidth, canvasHeight);
+  const canvas = createCanvas(100, 100); // Temporary size
   canvas.parent('canvas-container');
 
   colorMode(HSL, 360, 100, 100);
   noStroke();
 
+  calculateDimensions();
   generateColorColumns();
+}
+
+function calculateDimensions() {
+  // Get the container width
+  const container = document.getElementById('canvas-container');
+  const containerWidth = container ? container.clientWidth : windowWidth;
+
+  // Calculate responsive cell size
+  const maxWidth = containerWidth - 32; // Account for container padding
+  const totalCols = COLS;
+
+  // Calculate cell size that fits within container
+  cellSize = Math.min(BASE_CELL_SIZE, (maxWidth - BASE_PADDING * (totalCols + 1)) / totalCols);
+  padding = Math.min(BASE_PADDING, cellSize * 0.1);
+
+  // Ensure minimum size
+  cellSize = Math.max(cellSize, 40);
+
+  canvasWidth = COLS * (cellSize + padding) + padding;
+  canvasHeight = ROWS * (cellSize + padding) + padding;
+
+  resizeCanvas(canvasWidth, canvasHeight);
 }
 
 function generateColorColumns() {
@@ -98,53 +119,37 @@ function hslToHex(h, s, l) {
 
 function draw() {
   background(10);
-  
+
   // Draw grid
   for (let row = 0; row < ROWS; row++) {
     for (let col = 0; col < COLS; col++) {
       const cellData = colorGrid[row][col];
-      const x = col * (CELL_SIZE + PADDING) + PADDING;
-      const y = row * (CELL_SIZE + PADDING) + PADDING;
-      
+      const x = col * (cellSize + padding) + padding;
+      const y = row * (cellSize + padding) + padding;
+
       // Check if this cell is hovered or selected
       const isHovered = hoverCell && hoverCell.row === row && hoverCell.col === col;
       const isSelected = selectedCell && selectedCell.row === row && selectedCell.col === col;
-      
+
       // Draw cell
       fill(cellData.hue, cellData.saturation, cellData.lightness);
-      
+
       if (isSelected) {
         // Selected: white border
         stroke(0, 0, 100);
         strokeWeight(3);
-        rect(x - 1, y - 1, CELL_SIZE + 2, CELL_SIZE + 2, 4);
+        rect(x - 1, y - 1, cellSize + 2, cellSize + 2, 4);
         noStroke();
       } else if (isHovered) {
         // Hovered: subtle highlight
         stroke(0, 0, 100, 0.5);
         strokeWeight(2);
-        rect(x, y, CELL_SIZE, CELL_SIZE, 3);
+        rect(x, y, cellSize, cellSize, 3);
         noStroke();
       } else {
-        rect(x, y, CELL_SIZE, CELL_SIZE, 2);
+        rect(x, y, cellSize, cellSize, 2);
       }
     }
-  }
-  
-  // Draw row labels (A-P) on the left
-  fill(0, 0, 60);
-  textSize(10);
-  textAlign(RIGHT, CENTER);
-  for (let row = 0; row < ROWS; row++) {
-    const y = row * (CELL_SIZE + PADDING) + PADDING + CELL_SIZE / 2;
-    // Labels would go outside canvas - skip for now
-  }
-  
-  // Draw column labels (1-30) on top
-  textAlign(CENTER, BOTTOM);
-  for (let col = 0; col < COLS; col++) {
-    const x = col * (CELL_SIZE + PADDING) + PADDING + CELL_SIZE / 2;
-    // Labels would go outside canvas - skip for now
   }
 }
 
@@ -153,9 +158,9 @@ function mouseMoved() {
 }
 
 function updateHoverCell() {
-  const col = Math.floor((mouseX - PADDING) / (CELL_SIZE + PADDING));
-  const row = Math.floor((mouseY - PADDING) / (CELL_SIZE + PADDING));
-  
+  const col = Math.floor((mouseX - padding) / (cellSize + padding));
+  const row = Math.floor((mouseY - padding) / (cellSize + padding));
+
   if (col >= 0 && col < COLS && row >= 0 && row < ROWS) {
     hoverCell = { row, col };
     cursor(HAND);
@@ -184,6 +189,6 @@ function mousePressed() {
 
 // Handle window resize
 function windowResized() {
-  // Canvas size is fixed based on grid dimensions
-  // No resize needed
+  calculateDimensions();
+  generateColorColumns();
 }
