@@ -1,23 +1,24 @@
 // ============================================
 // Simple Color Columns
-// 8 columns of solid colors
+// 9 columns of solid colors
 // ============================================
 
-const COLS = 8;
+const COLS = 9;
 const ROWS = 1;
 const CELL_SIZE = 80;
 const PADDING = 8;
 
-// Define the 8 colors
+// Define the 9 colors
 const COLORS = [
-  { name: 'Red', hue: 0 },
-  { name: 'Orange', hue: 30 },
-  { name: 'Yellow', hue: 60 },
-  { name: 'Green', hue: 120 },
-  { name: 'Cyan', hue: 180 },
-  { name: 'Blue', hue: 240 },
-  { name: 'Violet', hue: 270 },
-  { name: 'Magenta', hue: 300 }
+  { name: 'Red', hue: 0, lightness: 50 },
+  { name: 'Orange', hue: 30, lightness: 50 },
+  { name: 'Yellow', hue: 60, lightness: 50 },
+  { name: 'Green', hue: 120, lightness: 50 },
+  { name: 'Dark Green', hue: 120, lightness: 30 },
+  { name: 'Cyan', hue: 180, lightness: 50 },
+  { name: 'Blue', hue: 240, lightness: 50 },
+  { name: 'Violet', hue: 270, lightness: 50 },
+  { name: 'Magenta', hue: 300, lightness: 50 }
 ];
 
 let colorGrid = [];
@@ -47,7 +48,7 @@ function generateColorColumns() {
     for (let col = 0; col < COLS; col++) {
       const hue = COLORS[col].hue;
       const saturation = 100;
-      const lightness = 50;
+      const lightness = COLORS[col].lightness;
 
       const hexColor = hslToHex(hue, saturation, lightness);
 

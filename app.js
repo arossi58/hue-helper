@@ -139,6 +139,105 @@ function resetColorTheme() {
 }
 
 // ============================================
+// Shade Grid Generation
+// ============================================
+async function fetchColorName(hex) {
+  try {
+    const cleanHex = hex.replace('#', '');
+    const response = await fetch(`https://www.thecolorapi.com/id?hex=${cleanHex}`);
+    const data = await response.json();
+    return data.name?.value || 'Unknown';
+  } catch (error) {
+    console.error('Error fetching color name:', error);
+    return 'Unknown';
+  }
+}
+
+function generateShades(hex, count = 7) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return [];
+
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+  const shades = [];
+
+  // Generate shades from light to dark
+  for (let i = 0; i < count; i++) {
+    // Lightness from 90 (very light) to 10 (very dark)
+    const lightness = 90 - (i * (80 / (count - 1)));
+    const shadeHex = hslToHexColor(hsl.h, hsl.s, lightness);
+    shades.push(shadeHex);
+  }
+
+  return shades;
+}
+
+function hslToHexColor(h, s, l) {
+  s = s / 100;
+  l = l / 100;
+
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
+
+  let r = 0, g = 0, b = 0;
+
+  if (0 <= h && h < 60) {
+    r = c; g = x; b = 0;
+  } else if (60 <= h && h < 120) {
+    r = x; g = c; b = 0;
+  } else if (120 <= h && h < 180) {
+    r = 0; g = c; b = x;
+  } else if (180 <= h && h < 240) {
+    r = 0; g = x; b = c;
+  } else if (240 <= h && h < 300) {
+    r = x; g = 0; b = c;
+  } else if (300 <= h && h < 360) {
+    r = c; g = 0; b = x;
+  }
+
+  r = Math.round((r + m) * 255);
+  g = Math.round((g + m) * 255);
+  b = Math.round((b + m) * 255);
+
+  return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+async function generateShadeGrid(hex) {
+  const shadeGridSection = document.getElementById('shade-grid-section');
+  const shadeGrid = document.getElementById('shade-grid');
+
+  if (!shadeGridSection || !shadeGrid) return;
+
+  shadeGridSection.classList.remove('hidden');
+  shadeGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #9ca3af;">Loading shade names...</div>';
+
+  const shades = generateShades(hex);
+
+  // Fetch color names for all shades
+  const shadePromises = shades.map(async (shadeHex) => {
+    const name = await fetchColorName(shadeHex);
+    return { hex: shadeHex, name };
+  });
+
+  const shadesWithNames = await Promise.all(shadePromises);
+
+  // Render shade grid
+  shadeGrid.innerHTML = '';
+  shadesWithNames.forEach(shade => {
+    const shadeItem = document.createElement('div');
+    shadeItem.className = 'shade-item';
+
+    shadeItem.innerHTML = `
+      <div class="shade-swatch" style="background-color: ${shade.hex}"></div>
+      <div class="shade-name">${shade.name}</div>
+      <div class="shade-hex">${shade.hex.toUpperCase()}</div>
+    `;
+
+    shadeGrid.appendChild(shadeItem);
+  });
+}
+
+// ============================================
 // UI Updates
 // ============================================
 function showSelectedColor(hex) {
@@ -265,6 +364,11 @@ function renderResults() {
 
     researchListEl.appendChild(card);
   });
+
+  // Generate shade grid
+  if (state.selectedColor) {
+    generateShadeGrid(state.selectedColor);
+  }
 }
 
 // ============================================
