@@ -27,6 +27,8 @@ let state = {
   additionalNouns: {}, // { countryName: [noun1, noun2, ...] }
   // Track color hierarchy (tree path from parent to current)
   colorHierarchy: [], // [{hex: '#ff0000', name: 'Red'}, {hex: '#cc0000', name: 'Dark Red'}, ...]
+  // Track which level in the hierarchy we're currently viewing
+  activeHierarchyIndex: -1, // -1 means no active color, otherwise index into colorHierarchy
 };
 
 // ============================================
@@ -377,8 +379,7 @@ async function generateShadeGrid(hex) {
 
   // Update section title based on hierarchy
   const titleElement = shadeGridSection.querySelector('h3');
-  const currentColorIndex = state.colorHierarchy.length - 1;
-  const currentColor = state.colorHierarchy[currentColorIndex];
+  const currentColor = state.colorHierarchy[state.activeHierarchyIndex];
 
   // Fetch color name if not already set
   if (currentColor && !currentColor.name) {
@@ -446,10 +447,10 @@ async function renderColorHierarchy() {
 
   for (let i = 0; i < state.colorHierarchy.length; i++) {
     const color = state.colorHierarchy[i];
-    const isLast = i === state.colorHierarchy.length - 1;
+    const isActive = i === state.activeHierarchyIndex;
 
     const item = document.createElement('div');
-    item.className = `hierarchy-item ${isLast ? 'active' : ''}`;
+    item.className = `hierarchy-item ${isActive ? 'active' : ''}`;
 
     // Fetch color name if not already set
     if (!color.name) {
@@ -464,17 +465,15 @@ async function renderColorHierarchy() {
       </div>
     `;
 
-    // Make clickable to navigate back to this level
-    if (!isLast) {
-      item.addEventListener('click', () => {
-        navigateToHierarchyLevel(i);
-      });
-    }
+    // Make all items clickable to navigate to that level
+    item.addEventListener('click', () => {
+      navigateToHierarchyLevel(i);
+    });
 
     container.appendChild(item);
 
     // Add arrow if not last
-    if (!isLast) {
+    if (i < state.colorHierarchy.length - 1) {
       const arrow = document.createElement('div');
       arrow.className = 'hierarchy-arrow';
       arrow.textContent = '›';
@@ -484,9 +483,9 @@ async function renderColorHierarchy() {
 }
 
 function navigateToHierarchyLevel(index) {
-  // Trim hierarchy to selected level
-  state.colorHierarchy = state.colorHierarchy.slice(0, index + 1);
-  const selectedColor = state.colorHierarchy[state.colorHierarchy.length - 1];
+  // Set the active level without losing the rest of the hierarchy
+  state.activeHierarchyIndex = index;
+  const selectedColor = state.colorHierarchy[index];
 
   state.selectedColor = selectedColor.hex;
   showSelectedColor(selectedColor.hex);
@@ -954,11 +953,23 @@ function onColorSelected(hex, position, isShade = false) {
 
   // Handle hierarchy
   if (isShade) {
-    // Append to hierarchy when selecting a shade
-    state.colorHierarchy.push({ hex, name: null });
+    // When selecting a shade:
+    // - If we're at the end of hierarchy, append
+    // - If we're viewing a parent, trim after active index and append new shade
+    if (state.activeHierarchyIndex === state.colorHierarchy.length - 1) {
+      // At the end, just append
+      state.colorHierarchy.push({ hex, name: null });
+      state.activeHierarchyIndex = state.colorHierarchy.length - 1;
+    } else {
+      // In the middle, trim and append
+      state.colorHierarchy = state.colorHierarchy.slice(0, state.activeHierarchyIndex + 1);
+      state.colorHierarchy.push({ hex, name: null });
+      state.activeHierarchyIndex = state.colorHierarchy.length - 1;
+    }
   } else {
     // Start new hierarchy when selecting from color wheel
     state.colorHierarchy = [{ hex, name: null }];
+    state.activeHierarchyIndex = 0;
   }
 
   showSelectedColor(hex);

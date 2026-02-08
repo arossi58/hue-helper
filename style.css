@@ -86,16 +86,23 @@ h1 {
   border: 1px solid #374151;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
-.hierarchy-item:hover {
+.hierarchy-item:hover:not(.active) {
   background: #374151;
-  border-color: var(--accent-color-border);
+  border-color: #4b5563;
+  transform: translateY(-1px);
 }
 
 .hierarchy-item.active {
   background: var(--accent-color-light);
   border-color: var(--accent-color-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.hierarchy-item.active .hierarchy-name {
+  color: var(--accent-color-tag);
 }
 
 .hierarchy-swatch {
