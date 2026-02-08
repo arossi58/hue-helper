@@ -336,6 +336,39 @@ h1 {
   border-radius: 8px;
 }
 
+.load-more-nouns-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  margin-top: 0.625rem;
+  background: transparent;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  color: #9ca3af;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.load-more-nouns-btn:hover:not(:disabled) {
+  background: #1f2937;
+  border-color: var(--accent-color-border);
+  color: var(--accent-color-tag);
+}
+
+.load-more-nouns-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.load-more-nouns-btn svg {
+  flex-shrink: 0;
+}
+
 .sources-section {
   padding-top: 0.75rem;
   border-top: 1px solid #1f2937;

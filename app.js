@@ -23,6 +23,8 @@ let state = {
   cacheStatus: null,
   // Track API calls to prevent rate limit abuse
   apiCallTimestamps: [],
+  // Track additional nouns loaded for each country
+  additionalNouns: {}, // { countryName: [noun1, noun2, ...] }
 };
 
 // ============================================
@@ -66,6 +68,30 @@ function checkCache(hex, location) {
 function saveToCache(hex, location, data) {
   saveToStorage(getCacheKey(hex, location), {
     data,
+    timestamp: Date.now(),
+  });
+}
+
+function getAdditionalNounsCacheKey(hex, location, country) {
+  return `additional-nouns:${hex.toLowerCase()}:${location || 'global'}:${country}`;
+}
+
+function getAdditionalNounsFromCache(hex, location, country) {
+  const cached = getFromStorage(getAdditionalNounsCacheKey(hex, location, country));
+  if (!cached) return null;
+
+  const age = Date.now() - (cached.timestamp || 0);
+  const maxAge = CONFIG.CACHE_DURATION_DAYS * 24 * 60 * 60 * 1000;
+
+  return age < maxAge ? cached.nouns : null;
+}
+
+function saveAdditionalNounsToCache(hex, location, country, nouns) {
+  const existing = getAdditionalNounsFromCache(hex, location, country) || [];
+  const combined = [...existing, ...nouns];
+
+  saveToStorage(getAdditionalNounsCacheKey(hex, location, country), {
+    nouns: combined,
     timestamp: Date.now(),
   });
 }
@@ -488,7 +514,16 @@ function renderResults() {
           ${(country.nouns || []).map(noun =>
             `<span class="word-tag noun">${noun}</span>`
           ).join('')}
+          ${(state.additionalNouns[country.country] || []).map(noun =>
+            `<span class="word-tag noun">${noun}</span>`
+          ).join('')}
         </div>
+        <button class="load-more-nouns-btn" data-country="${country.country}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Load 5 More
+        </button>
       </div>
 
       ${country.sources?.length ? `
@@ -507,6 +542,14 @@ function renderResults() {
     `;
 
     researchListEl.appendChild(card);
+
+    // Add event listener to the "Load More" button for this card
+    const loadMoreBtn = card.querySelector('.load-more-nouns-btn');
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', function() {
+        fetchMoreNouns(state.selectedColor, state.selectedLocation, country.country, this);
+      });
+    }
   });
 
   // Generate shade grid
@@ -523,6 +566,7 @@ async function fetchColorDescription(hex, location) {
   showCacheStatus(null);
   showLoading(true);
   state.result = null;
+  state.additionalNouns = {}; // Clear additional nouns when fetching new color
 
   console.log('🔍 Step 1: Checking local cache (localStorage)...');
 
@@ -665,6 +709,116 @@ async function fetchColorDescription(hex, location) {
   }
 }
 
+async function fetchMoreNouns(hex, location, country, buttonElement) {
+  console.log(`🔍 Fetching more nouns for ${country}...`);
+
+  // Disable button and show loading state
+  const originalText = buttonElement.innerHTML;
+  buttonElement.disabled = true;
+  buttonElement.innerHTML = '<span style="opacity: 0.6;">Loading...</span>';
+
+  try {
+    // Check cache first
+    const cachedNouns = getAdditionalNounsFromCache(hex, location, country);
+    const existingAdditionalNouns = state.additionalNouns[country] || [];
+    const totalCachedNouns = cachedNouns ? cachedNouns.length : 0;
+    const alreadyLoadedCount = existingAdditionalNouns.length;
+
+    console.log(`📦 Cache has ${totalCachedNouns} additional nouns, already loaded ${alreadyLoadedCount}`);
+
+    // If cache has more nouns we haven't loaded yet, use those
+    if (cachedNouns && cachedNouns.length > alreadyLoadedCount) {
+      const nounsToLoad = cachedNouns.slice(alreadyLoadedCount, alreadyLoadedCount + 5);
+      console.log(`✅ Loading ${nounsToLoad.length} nouns from cache`);
+
+      state.additionalNouns[country] = [...existingAdditionalNouns, ...nounsToLoad];
+      buttonElement.innerHTML = originalText;
+      buttonElement.disabled = false;
+      renderResults();
+      return;
+    }
+
+    // Need to fetch from AI
+    console.log('❌ No cached nouns available, fetching from AI...');
+
+    // Check rate limit
+    const rateLimitCheck = checkRateLimit();
+    if (!rateLimitCheck.allowed) {
+      console.warn(`⚠️ Rate limit protection: Too many requests`);
+      showError(`Please wait ${rateLimitCheck.waitSeconds} seconds before loading more. This prevents excessive AI API usage.`);
+      buttonElement.innerHTML = originalText;
+      buttonElement.disabled = false;
+      return;
+    }
+
+    recordApiCall();
+
+    const response = await fetch(CONFIG.API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: CONFIG.API_MODEL,
+        max_tokens: 512,
+        messages: [{
+          role: 'user',
+          content: `Generate 5 specific, concrete nouns associated with the color ${hex} in ${country}.
+
+Return ONLY valid JSON in this exact format:
+{
+  "nouns": ["specific noun 1", "specific noun 2", "specific noun 3", "specific noun 4", "specific noun 5"]
+}
+
+Examples of good nouns: "Flamingo feather", "Salmon filet", "Cherry blossom petal", "Ruby gemstone"
+Make them culturally relevant to ${country} if possible.
+IMPORTANT: Pay attention to the specific hue and shade of the color ${hex}.`
+        }]
+      })
+    });
+
+    console.log('Response status:', response.status);
+
+    const data = await response.json();
+
+    // Check for API errors
+    if (data.error) {
+      const errorMessage = data.error.message || data.error;
+      if (errorMessage.includes('rate limit') || errorMessage.includes('rate_limit')) {
+        throw new Error('Too many requests! Please wait a moment and try again.');
+      }
+      throw new Error(errorMessage);
+    }
+
+    const text = data.content?.filter(i => i.type === 'text').map(i => i.text || '').join('') || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+    if (!jsonMatch) {
+      console.error('No JSON found in text:', text);
+      throw new Error('No JSON found in response');
+    }
+
+    const parsed = JSON.parse(jsonMatch[0].replace(/```json|```/g, '').trim());
+    const newNouns = parsed.nouns || [];
+
+    console.log(`✅ Received ${newNouns.length} new nouns:`, newNouns);
+
+    // Save to cache
+    saveAdditionalNounsToCache(hex, location, country, newNouns);
+
+    // Update state
+    state.additionalNouns[country] = [...existingAdditionalNouns, ...newNouns];
+
+    // Re-render
+    renderResults();
+
+  } catch (err) {
+    console.error('Error fetching more nouns:', err);
+    showError(`Failed to load more nouns: ${err.message}`);
+  } finally {
+    buttonElement.innerHTML = originalText;
+    buttonElement.disabled = false;
+  }
+}
+
 
 // ============================================
 // Geolocation
@@ -706,6 +860,9 @@ function onColorSelected(hex, position) {
 
   // Hide previous results
   document.getElementById('results').classList.add('hidden');
+
+  // Clear additional nouns state
+  state.additionalNouns = {};
 
   // Don't auto-fetch - wait for button click
 }
