@@ -1,12 +1,24 @@
 // ============================================
-// Hues and Cues Style Color Grid
-// 30 columns × 16 rows = 480 colors
+// Simple Color Columns
+// 8 columns of solid colors
 // ============================================
 
-const COLS = 30;
-const ROWS = 16;
-const CELL_SIZE = 28;
-const PADDING = 2;
+const COLS = 8;
+const ROWS = 1;
+const CELL_SIZE = 80;
+const PADDING = 8;
+
+// Define the 8 colors
+const COLORS = [
+  { name: 'Red', hue: 0 },
+  { name: 'Orange', hue: 30 },
+  { name: 'Yellow', hue: 60 },
+  { name: 'Green', hue: 120 },
+  { name: 'Cyan', hue: 180 },
+  { name: 'Blue', hue: 240 },
+  { name: 'Violet', hue: 270 },
+  { name: 'Magenta', hue: 300 }
+];
 
 let colorGrid = [];
 let selectedCell = null;
@@ -16,79 +28,37 @@ let canvasWidth, canvasHeight;
 function setup() {
   canvasWidth = COLS * (CELL_SIZE + PADDING) + PADDING;
   canvasHeight = ROWS * (CELL_SIZE + PADDING) + PADDING;
-  
+
   const canvas = createCanvas(canvasWidth, canvasHeight);
   canvas.parent('canvas-container');
-  
+
   colorMode(HSL, 360, 100, 100);
   noStroke();
-  
-  generateHuesAndCuesGrid();
+
+  generateColorColumns();
 }
 
-function generateHuesAndCuesGrid() {
-  
+function generateColorColumns() {
   colorGrid = [];
-  
+
   for (let row = 0; row < ROWS; row++) {
     colorGrid[row] = [];
-    
+
     for (let col = 0; col < COLS; col++) {
-      // Hue: spans full spectrum across columns
-      // Starting from red (0°), going through the rainbow
-      const hue = map(col, 0, COLS, 0, 360);
-      
-      // Create variation pattern similar to Hues and Cues
-      // The board has bands of different saturation/lightness
-      let saturation, lightness;
-      
-      // Divide rows into bands with different characteristics
-      const rowNormalized = row / (ROWS - 1); // 0 to 1
-      
-      if (row < 3) {
-        // Top rows: lighter, lower saturation (pastels)
-        saturation = map(row, 0, 2, 40, 60);
-        lightness = map(row, 0, 2, 85, 75);
-      } else if (row < 6) {
-        // Upper-middle: medium-light, medium-high saturation
-        saturation = map(row, 3, 5, 65, 80);
-        lightness = map(row, 3, 5, 70, 60);
-      } else if (row < 10) {
-        // Middle: high saturation, medium lightness (vivid colors)
-        saturation = map(row, 6, 9, 85, 95);
-        lightness = map(row, 6, 9, 55, 45);
-      } else if (row < 13) {
-        // Lower-middle: high saturation, darker
-        saturation = map(row, 10, 12, 90, 75);
-        lightness = map(row, 10, 12, 40, 30);
-      } else {
-        // Bottom rows: lower saturation, dark (muted darks)
-        saturation = map(row, 13, 15, 60, 35);
-        lightness = map(row, 13, 15, 25, 15);
-      }
-      
-      // Add slight variation based on hue for more natural look
-      // Some hues (yellow) appear brighter, so adjust
-      let lightnessAdjust = 0;
-      if (hue > 40 && hue < 70) {
-        // Yellow range appears brighter
-        lightnessAdjust = -5;
-      } else if (hue > 200 && hue < 260) {
-        // Blue range can be darker
-        lightnessAdjust = 3;
-      }
-      
-      lightness = constrain(lightness + lightnessAdjust, 10, 95);
-      
+      const hue = COLORS[col].hue;
+      const saturation = 100;
+      const lightness = 50;
+
       const hexColor = hslToHex(hue, saturation, lightness);
-      
+
       colorGrid[row][col] = {
         hue,
         saturation,
         lightness,
         hex: hexColor,
-        col: col + 1, // 1-indexed for display
-        row: String.fromCharCode(65 + row), // A-P
+        name: COLORS[col].name,
+        col: col + 1,
+        row: String.fromCharCode(65 + row),
       };
     }
   }
