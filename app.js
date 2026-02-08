@@ -26,7 +26,8 @@ let state = {
   // Track additional nouns loaded for each country
   additionalNouns: {}, // { countryName: [noun1, noun2, ...] }
   // Track color hierarchy (tree path from parent to current)
-  colorHierarchy: [], // [{hex: '#ff0000', name: 'Red'}, {hex: '#cc0000', name: 'Dark Red'}, ...]
+  // Each item: {hex, name, cachedResult, cachedAdditionalNouns}
+  colorHierarchy: [],
   // Track which level in the hierarchy we're currently viewing
   activeHierarchyIndex: -1, // -1 means no active color, otherwise index into colorHierarchy
 };
@@ -491,14 +492,23 @@ function navigateToHierarchyLevel(index) {
   showSelectedColor(selectedColor.hex);
   renderColorHierarchy();
 
-  // Reset theme to greyscale
-  resetColorTheme();
+  // Check if this color has cached results
+  if (selectedColor.cachedResult) {
+    // Restore cached results
+    state.result = selectedColor.cachedResult;
+    state.additionalNouns = selectedColor.cachedAdditionalNouns || {};
 
-  // Hide previous results
-  document.getElementById('results').classList.add('hidden');
+    // Apply the color theme
+    applyColorTheme(selectedColor.hex);
 
-  // Clear additional nouns state
-  state.additionalNouns = {};
+    // Show the results
+    renderResults();
+  } else {
+    // No cached results, reset theme and hide results
+    resetColorTheme();
+    document.getElementById('results').classList.add('hidden');
+    state.additionalNouns = {};
+  }
 }
 
 function showSelectedColor(hex) {
@@ -674,6 +684,14 @@ async function fetchColorDescription(hex, location) {
     console.log('✅ Found in local cache - using cached result');
     state.cacheStatus = 'hit';
     state.result = cached;
+
+    // Cache the result in the current hierarchy level
+    const currentHierarchyItem = state.colorHierarchy[state.activeHierarchyIndex];
+    if (currentHierarchyItem) {
+      currentHierarchyItem.cachedResult = cached;
+      currentHierarchyItem.cachedAdditionalNouns = {};
+    }
+
     showCacheStatus('hit');
     showLoading(false);
     renderResults();
@@ -784,6 +802,13 @@ async function fetchColorDescription(hex, location) {
 
     state.result = parsed;
 
+    // Cache the result in the current hierarchy level
+    const currentHierarchyItem = state.colorHierarchy[state.activeHierarchyIndex];
+    if (currentHierarchyItem) {
+      currentHierarchyItem.cachedResult = parsed;
+      currentHierarchyItem.cachedAdditionalNouns = {};
+    }
+
     // Show cache status based on server response
     if (serverCacheStatus === 'HIT') {
       state.cacheStatus = 'shared-hit';
@@ -830,6 +855,13 @@ async function fetchMoreNouns(hex, location, country, buttonElement) {
       console.log(`✅ Loading ${nounsToLoad.length} nouns from cache`);
 
       state.additionalNouns[country] = [...existingAdditionalNouns, ...nounsToLoad];
+
+      // Cache the additional nouns in the current hierarchy level
+      const currentHierarchyItem = state.colorHierarchy[state.activeHierarchyIndex];
+      if (currentHierarchyItem) {
+        currentHierarchyItem.cachedAdditionalNouns = { ...state.additionalNouns };
+      }
+
       buttonElement.innerHTML = originalText;
       buttonElement.disabled = false;
       renderResults();
@@ -905,6 +937,12 @@ IMPORTANT: Pay attention to the specific hue and shade of the color ${hex}.`
     // Update state
     state.additionalNouns[country] = [...existingAdditionalNouns, ...newNouns];
 
+    // Cache the additional nouns in the current hierarchy level
+    const currentHierarchyItem = state.colorHierarchy[state.activeHierarchyIndex];
+    if (currentHierarchyItem) {
+      currentHierarchyItem.cachedAdditionalNouns = { ...state.additionalNouns };
+    }
+
     // Re-render
     renderResults();
 
@@ -958,17 +996,32 @@ function onColorSelected(hex, position, isShade = false) {
     // - If we're viewing a parent, trim after active index and append new shade
     if (state.activeHierarchyIndex === state.colorHierarchy.length - 1) {
       // At the end, just append
-      state.colorHierarchy.push({ hex, name: null });
+      state.colorHierarchy.push({
+        hex,
+        name: null,
+        cachedResult: null,
+        cachedAdditionalNouns: {}
+      });
       state.activeHierarchyIndex = state.colorHierarchy.length - 1;
     } else {
       // In the middle, trim and append
       state.colorHierarchy = state.colorHierarchy.slice(0, state.activeHierarchyIndex + 1);
-      state.colorHierarchy.push({ hex, name: null });
+      state.colorHierarchy.push({
+        hex,
+        name: null,
+        cachedResult: null,
+        cachedAdditionalNouns: {}
+      });
       state.activeHierarchyIndex = state.colorHierarchy.length - 1;
     }
   } else {
     // Start new hierarchy when selecting from color wheel
-    state.colorHierarchy = [{ hex, name: null }];
+    state.colorHierarchy = [{
+      hex,
+      name: null,
+      cachedResult: null,
+      cachedAdditionalNouns: {}
+    }];
     state.activeHierarchyIndex = 0;
   }
 
