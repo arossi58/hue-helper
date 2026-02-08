@@ -25,6 +25,8 @@ let state = {
   apiCallTimestamps: [],
   // Track additional nouns loaded for each country
   additionalNouns: {}, // { countryName: [noun1, noun2, ...] }
+  // Track color hierarchy (tree path from parent to current)
+  colorHierarchy: [], // [{hex: '#ff0000', name: 'Red'}, {hex: '#cc0000', name: 'Dark Red'}, ...]
 };
 
 // ============================================
@@ -372,6 +374,25 @@ async function generateShadeGrid(hex) {
   if (!shadeGridSection || !shadeGrid) return;
 
   shadeGridSection.classList.remove('hidden');
+
+  // Update section title based on hierarchy
+  const titleElement = shadeGridSection.querySelector('h3');
+  const currentColorIndex = state.colorHierarchy.length - 1;
+  const currentColor = state.colorHierarchy[currentColorIndex];
+
+  // Fetch color name if not already set
+  if (currentColor && !currentColor.name) {
+    currentColor.name = await fetchColorName(hex);
+    // Re-render hierarchy to show the updated name
+    renderColorHierarchy();
+  }
+
+  const colorName = currentColor?.name || 'this color';
+
+  if (titleElement) {
+    titleElement.innerHTML = `Explore Shades of ${colorName} <span style="font-size: 0.75rem; color: #6b7280; font-weight: 400;">(click to dive deeper)</span>`;
+  }
+
   shadeGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #9ca3af;">Loading shade names...</div>';
 
   const shades = generateShades(hex);
@@ -400,7 +421,7 @@ async function generateShadeGrid(hex) {
     const swatch = shadeItem.querySelector('.shade-swatch');
     swatch.style.cursor = 'pointer';
     swatch.addEventListener('click', () => {
-      onColorSelected(shade.hex, null);
+      onColorSelected(shade.hex, null, true); // true = isShade
       // Scroll to top to see the selected color
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
@@ -412,6 +433,75 @@ async function generateShadeGrid(hex) {
 // ============================================
 // UI Updates
 // ============================================
+async function renderColorHierarchy() {
+  const container = document.getElementById('color-hierarchy');
+
+  if (state.colorHierarchy.length === 0) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  container.classList.remove('hidden');
+  container.innerHTML = '';
+
+  for (let i = 0; i < state.colorHierarchy.length; i++) {
+    const color = state.colorHierarchy[i];
+    const isLast = i === state.colorHierarchy.length - 1;
+
+    const item = document.createElement('div');
+    item.className = `hierarchy-item ${isLast ? 'active' : ''}`;
+
+    // Fetch color name if not already set
+    if (!color.name) {
+      color.name = await fetchColorName(color.hex);
+    }
+
+    item.innerHTML = `
+      <div class="hierarchy-swatch" style="background-color: ${color.hex}"></div>
+      <div class="hierarchy-info">
+        <div class="hierarchy-name">${color.name}</div>
+        <div class="hierarchy-hex">${color.hex.toUpperCase()}</div>
+      </div>
+    `;
+
+    // Make clickable to navigate back to this level
+    if (!isLast) {
+      item.addEventListener('click', () => {
+        navigateToHierarchyLevel(i);
+      });
+    }
+
+    container.appendChild(item);
+
+    // Add arrow if not last
+    if (!isLast) {
+      const arrow = document.createElement('div');
+      arrow.className = 'hierarchy-arrow';
+      arrow.textContent = '›';
+      container.appendChild(arrow);
+    }
+  }
+}
+
+function navigateToHierarchyLevel(index) {
+  // Trim hierarchy to selected level
+  state.colorHierarchy = state.colorHierarchy.slice(0, index + 1);
+  const selectedColor = state.colorHierarchy[state.colorHierarchy.length - 1];
+
+  state.selectedColor = selectedColor.hex;
+  showSelectedColor(selectedColor.hex);
+  renderColorHierarchy();
+
+  // Reset theme to greyscale
+  resetColorTheme();
+
+  // Hide previous results
+  document.getElementById('results').classList.add('hidden');
+
+  // Clear additional nouns state
+  state.additionalNouns = {};
+}
+
 function showSelectedColor(hex) {
   const container = document.getElementById('selected-color');
   const swatch = document.getElementById('color-swatch');
@@ -858,10 +948,21 @@ async function detectUserCountry() {
 // ============================================
 // Event Handlers
 // ============================================
-function onColorSelected(hex, position) {
+function onColorSelected(hex, position, isShade = false) {
   state.selectedColor = hex;
   state.selectedPosition = position;
+
+  // Handle hierarchy
+  if (isShade) {
+    // Append to hierarchy when selecting a shade
+    state.colorHierarchy.push({ hex, name: null });
+  } else {
+    // Start new hierarchy when selecting from color wheel
+    state.colorHierarchy = [{ hex, name: null }];
+  }
+
   showSelectedColor(hex);
+  renderColorHierarchy();
   updateSearchButtonState();
 
   // Reset theme to greyscale when new color is selected
