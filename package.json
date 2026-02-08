@@ -1,0 +1,9 @@
+{
+  "name": "hue-helper",
+  "version": "1.0.0",
+  "description": "Color culture research tool",
+  "type": "module",
+  "dependencies": {
+    "@vercel/kv": "^3.0.0"
+  }
+}
