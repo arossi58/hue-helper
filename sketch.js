@@ -27,9 +27,6 @@ function setup() {
 }
 
 function generateHuesAndCuesGrid() {
-  // Generate colors similar to Hues and Cues board
-  // Horizontal: Hue progression (red → orange → yellow → green → cyan → blue → purple → pink)
-  // Vertical: Saturation and lightness variations
   
   colorGrid = [];
   
