@@ -561,7 +561,14 @@ async function fetchColorDescription(hex, location) {
 
     // Check for API errors
     if (data.error) {
-      throw new Error(data.error.message || data.error);
+      const errorMessage = data.error.message || data.error;
+
+      // Check if it's a rate limit error
+      if (errorMessage.includes('rate limit') || errorMessage.includes('rate_limit')) {
+        throw new Error('RATE_LIMIT');
+      }
+
+      throw new Error(errorMessage);
     }
 
     const text = data.content?.filter(i => i.type === 'text').map(i => i.text || '').join('') || '';
@@ -588,10 +595,16 @@ async function fetchColorDescription(hex, location) {
     } else {
       showCacheStatus('miss');
     }
-    
+
   } catch (err) {
     console.error('API Error:', err);
-    showError(`Failed to generate color analysis: ${err.message}`);
+
+    // Show user-friendly error messages
+    if (err.message === 'RATE_LIMIT') {
+      showError('Too many requests! Please wait a moment and try again.');
+    } else {
+      showError(`Failed to generate color analysis: ${err.message}`);
+    }
   } finally {
     showLoading(false);
     renderResults();
