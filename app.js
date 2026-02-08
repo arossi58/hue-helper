@@ -6,6 +6,8 @@ const CONFIG = {
   API_MODEL: 'claude-sonnet-4-20250514',
   // Vercel serverless function endpoint
   API_ENDPOINT: 'https://hue-helper.vercel.app/api/color-culture',
+  // Client-side rate limiting (to prevent excessive API calls)
+  MAX_API_CALLS_PER_MINUTE: 5,
 };
 
 // ============================================
@@ -19,6 +21,8 @@ let state = {
   loading: false,
   error: null,
   cacheStatus: null,
+  // Track API calls to prevent rate limit abuse
+  apiCallTimestamps: [],
 };
 
 // ============================================
@@ -64,6 +68,33 @@ function saveToCache(hex, location, data) {
     data,
     timestamp: Date.now(),
   });
+}
+
+// ============================================
+// Rate Limiting Protection
+// ============================================
+function checkRateLimit() {
+  const now = Date.now();
+  const oneMinuteAgo = now - 60 * 1000;
+
+  // Remove timestamps older than 1 minute
+  state.apiCallTimestamps = state.apiCallTimestamps.filter(t => t > oneMinuteAgo);
+
+  // Check if under limit
+  if (state.apiCallTimestamps.length >= CONFIG.MAX_API_CALLS_PER_MINUTE) {
+    const oldestCall = state.apiCallTimestamps[0];
+    const waitTime = Math.ceil((oldestCall + 60 * 1000 - now) / 1000);
+    return {
+      allowed: false,
+      waitSeconds: waitTime
+    };
+  }
+
+  return { allowed: true };
+}
+
+function recordApiCall() {
+  state.apiCallTimestamps.push(Date.now());
 }
 
 // ============================================
@@ -493,21 +524,37 @@ async function fetchColorDescription(hex, location) {
   showLoading(true);
   state.result = null;
 
-  // Check cache first
+  console.log('🔍 Step 1: Checking local cache (localStorage)...');
+
+  // PRIORITY 1: Check local cache first (instant, no API call)
   const cached = checkCache(hex, location);
   if (cached) {
+    console.log('✅ Found in local cache - using cached result');
     state.cacheStatus = 'hit';
     state.result = cached;
     showCacheStatus('hit');
     showLoading(false);
     renderResults();
-    return;
+    return; // EARLY EXIT - no API call needed
+  }
+
+  console.log('❌ Not in local cache');
+  console.log('🔍 Step 2: Checking server cache (Vercel KV)...');
+
+  // SAFEGUARD: Check client-side rate limit before making request
+  const rateLimitCheck = checkRateLimit();
+  if (!rateLimitCheck.allowed) {
+    console.warn(`⚠️ Rate limit protection: Too many requests`);
+    showError(`Please wait ${rateLimitCheck.waitSeconds} seconds before searching again. This prevents excessive AI API usage.`);
+    showLoading(false);
+    return; // EARLY EXIT - prevent excessive API calls
   }
 
   state.cacheStatus = 'miss';
 
   try {
-    console.log('Fetching from:', CONFIG.API_ENDPOINT);
+    console.log('📡 Sending request to:', CONFIG.API_ENDPOINT);
+    recordApiCall(); // Track this API call attempt
     console.log('Color:', hex);
     console.log('Country:', location);
 
@@ -553,8 +600,15 @@ async function fetchColorDescription(hex, location) {
     
     console.log('Response status:', response.status);
 
-    // Check if this came from the server-side cache
+    // PRIORITY 2: Check if server returned cached result (no AI call made)
     const serverCacheStatus = response.headers.get('X-Cache-Status');
+
+    if (serverCacheStatus === 'HIT') {
+      console.log('✅ Found in server cache (Vercel KV) - no AI API call made');
+    } else {
+      console.log('❌ Not in server cache');
+      console.log('🤖 Step 3: Server called AI API (last resort)');
+    }
 
     const data = await response.json();
     console.log('API Response:', data);

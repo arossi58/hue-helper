@@ -38,29 +38,55 @@ export default async function handler(req, res) {
   // Check API key
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
+    console.error('❌ ANTHROPIC_API_KEY not configured');
     return res.status(500).json({ error: 'API key not configured' });
+  }
+
+  // Check KV availability
+  const kvConfigured = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN;
+  if (!kvConfigured) {
+    console.warn('⚠️ Vercel KV not configured - caching disabled');
   }
 
   try {
     // Extract color and location for caching
     const { hex, location } = extractColorAndLocation(req.body);
+    console.log(`📝 Request: color=${hex}, location=${location}`);
 
-    // Check cache if we have both hex and location
-    if (hex && location) {
+    // CRITICAL: Always check database FIRST before calling AI API
+    console.log('🔍 Checking Vercel KV database...');
+
+    if (kvConfigured && hex && location) {
       const cacheKey = getCacheKey(hex, location);
-      const cached = await kv.get(cacheKey);
 
-      if (cached) {
-        console.log(`Cache HIT for ${cacheKey}`);
-        // Return cached result with a special header
-        res.setHeader('X-Cache-Status', 'HIT');
-        return res.status(200).json(cached);
+      try {
+        const cached = await kv.get(cacheKey);
+
+        if (cached) {
+          console.log(`✅ DATABASE HIT - returning cached result (no AI API call)`);
+          console.log(`   Cache key: ${cacheKey}`);
+          res.setHeader('X-Cache-Status', 'HIT');
+          // EARLY RETURN - AI API never called
+          return res.status(200).json(cached);
+        }
+
+        console.log(`❌ DATABASE MISS - result not in cache`);
+        console.log(`   Cache key: ${cacheKey}`);
+      } catch (kvError) {
+        console.error('⚠️ Cache read error:', kvError.message);
+        console.log('   Continuing to AI API despite cache error...');
       }
-
-      console.log(`Cache MISS for ${cacheKey}`);
+    } else {
+      if (!kvConfigured) {
+        console.warn('⚠️ Vercel KV not configured - database check skipped');
+      }
+      if (!hex || !location) {
+        console.log('⚠️ Could not extract color/location - cache check skipped');
+      }
     }
 
-    // Call Anthropic API
+    // LAST RESORT: Call Anthropic API only if NOT found in database
+    console.log('🤖 Calling AI API (last resort)...');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -73,23 +99,38 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // Save to cache if successful and we have cache key
-    if (response.ok && hex && location) {
+    // Handle rate limit errors with clear messaging
+    if (response.status === 429) {
+      console.error('⚠️ Rate limit hit - request not cached');
+      return res.status(429).json(data);
+    }
+
+    // Save to database for future requests (avoid AI API calls)
+    if (response.ok && kvConfigured && hex && location) {
       const cacheKey = getCacheKey(hex, location);
+      console.log(`💾 Saving to database for all users...`);
       try {
         await kv.set(cacheKey, data, { ex: CACHE_DURATION });
-        console.log(`Cached result for ${cacheKey}`);
+        console.log(`✅ SAVED TO DATABASE: ${cacheKey}`);
+        console.log(`   Next request for this color+location will use database (no AI call)`);
+        console.log(`   Cache expires: ${new Date(Date.now() + CACHE_DURATION * 1000).toLocaleDateString()}`);
         res.setHeader('X-Cache-Status', 'MISS');
       } catch (cacheError) {
-        console.error('Cache save error:', cacheError);
+        console.error('❌ Database save error:', cacheError.message);
+        console.error('   Warning: Result not cached - next request will call AI API again');
         // Continue even if caching fails
       }
+    } else if (!response.ok) {
+      console.error(`❌ API error ${response.status} - not caching`);
+    } else if (!kvConfigured) {
+      console.warn('⚠️ Result not cached (KV not configured) - all requests will call AI API');
     }
 
     return res.status(response.status).json(data);
 
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('❌ Unexpected error:', error.message);
+    console.error('Stack:', error.stack);
     return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 }
