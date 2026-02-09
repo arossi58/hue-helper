@@ -7,7 +7,7 @@ const CONFIG = {
   // Vercel serverless function endpoint
   API_ENDPOINT: 'https://hue-helper.vercel.app/api/color-culture',
   // Client-side rate limiting (to prevent excessive API calls)
-  MAX_API_CALLS_PER_MINUTE: 10, // Increase to 10 calls per minute
+  MAX_API_CALLS_PER_MINUTE: 999, // Effectively disabled for testing
 };
 
 // ============================================
@@ -1029,14 +1029,24 @@ function onColorSelected(hex, position, isShade = false) {
   renderColorHierarchy();
   updateSearchButtonState();
 
-  // Reset theme to greyscale when new color is selected
-  resetColorTheme();
+  // Check if the newly selected color has cached results
+  const currentHierarchyItem = state.colorHierarchy[state.activeHierarchyIndex];
+  if (currentHierarchyItem && currentHierarchyItem.cachedResult) {
+    // Restore cached results immediately
+    state.result = currentHierarchyItem.cachedResult;
+    state.additionalNouns = currentHierarchyItem.cachedAdditionalNouns || {};
 
-  // Hide previous results
-  document.getElementById('results').classList.add('hidden');
+    // Apply the color theme
+    applyColorTheme(hex);
 
-  // Clear additional nouns state
-  state.additionalNouns = {};
+    // Show the results
+    renderResults();
+  } else {
+    // No cached results, reset theme and hide results
+    resetColorTheme();
+    document.getElementById('results').classList.add('hidden');
+    state.additionalNouns = {};
+  }
 
   // Don't auto-fetch - wait for button click
 }
