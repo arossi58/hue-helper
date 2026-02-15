@@ -392,7 +392,7 @@ async function generateShadeGrid(hex) {
   const colorName = currentColor?.name || 'this color';
 
   if (titleElement) {
-    titleElement.innerHTML = `Explore Shades of ${colorName} <span style="font-size: 0.75rem; color: #6b7280; font-weight: 400;">(click to dive deeper)</span>`;
+    titleElement.innerHTML = `Explore Shades of ${colorName}`;
   }
 
   shadeGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #9ca3af;">Loading shade names...</div>';

@@ -178,16 +178,11 @@ h1 {
 /* Location selector */
 #location-selector {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 0.5rem;
   flex: 1;
   min-width: 200px;
-}
-
-#location-selector label {
-  font-size: 0.875rem;
-  color: #9ca3af;
-  font-weight: 500;
 }
 
 .location-input {
