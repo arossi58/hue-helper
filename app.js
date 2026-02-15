@@ -692,7 +692,6 @@ async function fetchColorDescription(hex, location) {
       currentHierarchyItem.cachedAdditionalNouns = {};
     }
 
-    showCacheStatus('hit');
     showLoading(false);
     renderResults();
     return; // EARLY EXIT - no API call needed
