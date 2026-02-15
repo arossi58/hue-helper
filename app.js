@@ -808,12 +808,9 @@ async function fetchColorDescription(hex, location) {
       currentHierarchyItem.cachedAdditionalNouns = {};
     }
 
-    // Show cache status based on server response
+    // Track cache status
     if (serverCacheStatus === 'HIT') {
       state.cacheStatus = 'shared-hit';
-      showCacheStatus('shared-hit');
-    } else {
-      showCacheStatus('miss');
     }
 
   } catch (err) {
