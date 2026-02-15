@@ -299,6 +299,9 @@ h1 {
 /* Results */
 #results {
   margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 #color-overview {
@@ -308,7 +311,6 @@ h1 {
   background: #111827;
   border-radius: 16px;
   border: 1px solid #1f2937;
-  margin-bottom: 1.5rem;
 }
 
 #overview-swatch {
@@ -319,20 +321,16 @@ h1 {
 }
 
 #overview-text h2 {
-  font-size: 1.25rem;
-  font-weight: 500;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   margin-bottom: 0.5rem;
 }
 
 #color-summary {
   color: #9ca3af;
-}
-
-.section-title {
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: #9ca3af;
-  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
 }
 
 /* Culture cards */
@@ -512,7 +510,6 @@ h1 {
 
 /* Shade Grid */
 #shade-grid-section {
-  margin-top: 2rem;
   padding: 1.5rem;
   background: #111827;
   border-radius: 16px;
@@ -520,9 +517,11 @@ h1 {
 }
 
 #shade-grid-section h3 {
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: #9ca3af;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
   margin-bottom: 1rem;
 }
 
