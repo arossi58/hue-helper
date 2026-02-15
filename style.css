@@ -169,9 +169,9 @@ h1 {
 }
 
 #color-hex {
-  font-family: monospace;
+  font-family: 'DM Serif Display', serif;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 400;
   color: #e5e7eb;
 }
 
@@ -325,7 +325,7 @@ h1 {
 }
 
 #overview-text h2 {
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   font-weight: 400;
   letter-spacing: 0;
   margin-bottom: 0.5rem;
@@ -366,7 +366,7 @@ h1 {
 
 .culture-name {
   font-family: 'DM Serif Display', serif;
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   font-weight: 400;
 }
 
@@ -523,7 +523,7 @@ h1 {
 
 #shade-grid-section h3 {
   font-family: 'DM Serif Display', serif;
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   font-weight: 400;
   letter-spacing: 0;
   color: #f3f4f6;
