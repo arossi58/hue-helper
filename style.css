@@ -528,7 +528,7 @@ h1 {
 
 #shade-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(60px, 60px));
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
   gap: 1rem;
   margin-top: 1rem;
 }
@@ -570,7 +570,7 @@ h1 {
   font-size: 0.75rem;
   color: #9ca3af;
   text-align: center;
-  word-break: break-word;
+  white-space: nowrap;
 }
 
 .shade-hex {
