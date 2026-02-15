@@ -35,10 +35,14 @@ header {
   margin-bottom: 2rem;
 }
 
+h1, h2 {
+  font-family: 'DM Serif Display', serif;
+}
+
 h1 {
   font-size: 2rem;
-  font-weight: 300;
-  letter-spacing: -0.025em;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   margin-bottom: 0.5rem;
 }
 
@@ -322,8 +326,8 @@ h1 {
 
 #overview-text h2 {
   font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   margin-bottom: 0.5rem;
 }
 
