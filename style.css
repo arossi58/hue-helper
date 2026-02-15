@@ -325,9 +325,9 @@ h1 {
 }
 
 #overview-text h2 {
-  font-size: 1.5rem;
+  font-size: 1.125rem;
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   margin-bottom: 0.5rem;
 }
 
@@ -365,8 +365,9 @@ h1 {
 }
 
 .culture-name {
+  font-family: 'DM Serif Display', serif;
   font-size: 1.125rem;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .culture-significance {
@@ -521,11 +522,11 @@ h1 {
 }
 
 #shade-grid-section h3 {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6b7280;
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.125rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #f3f4f6;
   margin-bottom: 1rem;
 }
 
