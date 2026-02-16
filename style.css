@@ -527,8 +527,9 @@ h1 {
 
 #shade-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, 60px);
+  justify-content: space-between;
+  gap: 1.5rem;
   margin-top: 1rem;
 }
 
